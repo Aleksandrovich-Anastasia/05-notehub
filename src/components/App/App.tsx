@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchNotes, type FetchNotesResponse } from '../../services/noteService';
 import NoteList from '../NoteList/NoteList';
 import SearchBox from '../SearchBox/SearchBox';
@@ -16,19 +16,18 @@ const App = () => {
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
- const { data, isLoading, error, refetch } = useQuery<FetchNotesResponse, Error>({
-  queryKey: ['notes', currentPage, debouncedSearch],
-  queryFn: () =>
-    fetchNotes({ page: currentPage, perPage: 12, search: debouncedSearch }),
-  staleTime: 5000,
-});
+  const { data, isLoading, error } = useQuery<FetchNotesResponse, Error>({
+    queryKey: ['notes', currentPage, debouncedSearch],
+    queryFn: () =>
+      fetchNotes({ page: currentPage, perPage: 12, search: debouncedSearch }),
+    staleTime: 5000,
+    placeholderData: keepPreviousData,
+  });
 
-  
   return (
     <div className={css.app}>
       <header className={css.toolbar}>
         <SearchBox value={searchTerm} onChange={setSearchTerm} />
-        
 
         {data?.totalPages && data.totalPages > 1 && (
           <Pagination
@@ -42,17 +41,16 @@ const App = () => {
         </button>
       </header>
 
-     {isLoading && <Loader />}
-     {error && <p>Error loading notes: {error.message}</p>}
+      {isLoading && <Loader />}
+      {error && <p>Error loading notes: {error.message}</p>}
 
       {data?.notes && data.notes.length > 0 && (
-  <NoteList notes={data.notes} refetch={refetch} />
-)}
-
+        <NoteList notes={data.notes} />
+      )}
 
       {isModalOpen && (
         <Modal onClose={() => setIsModalOpen(false)}>
-          <NoteForm onClose={() => setIsModalOpen(false)} refetchNotes={refetch} />
+          <NoteForm onClose={() => setIsModalOpen(false)} />
         </Modal>
       )}
     </div>
