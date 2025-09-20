@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchNotes, type FetchNotesResponse } from '../../services/noteService';
 import NoteList from '../NoteList/NoteList';
@@ -15,6 +15,10 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
 
   const { data, isLoading, error } = useQuery<FetchNotesResponse, Error>({
     queryKey: ['notes', currentPage, debouncedSearch],
